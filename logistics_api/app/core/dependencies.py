@@ -49,3 +49,14 @@ def get_current_user(
         raise credentials_exception
 
     return user
+
+
+def require_role(required_role: str):
+    def role_checker(user: User = Depends(get_current_user)):
+        if user.role.upper() != required_role.upper():
+            raise HTTPException(
+                status_code=403,
+                detail="You do not have permission to perform this action"
+            )
+        return user
+    return role_checker

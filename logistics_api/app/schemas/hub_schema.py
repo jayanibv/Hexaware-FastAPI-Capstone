@@ -1,15 +1,14 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
+from datetime import datetime
 
-class HubBase(BaseModel):
+class HubCreate(BaseModel):
+    name: str
+    location: str
+
+class HubResponse(BaseModel):
     id: int
-    hub_name: str
-    city: str
+    name: str
+    location: str
+    created_at: datetime
 
-class HubCreate(HubBase):
-    pass
-
-class Hub(HubBase):
-    id: int
-    
-    class Config:
-        from_attributes = True
+    model_config = {"from_attributes": True}
