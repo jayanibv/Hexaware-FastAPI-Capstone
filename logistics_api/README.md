@@ -1,124 +1,177 @@
-Logistics & Shipment Tracking API
+# 🚚 Logistics & Shipment Tracking API
 
-##Actors
-• Customer
-• Delivery Agent
-• Admin
+A scalable, event-driven logistics management backend built with **FastAPI**, supporting shipment lifecycle management, tracking, hub operations, and role-based access control.
 
-##Technology Stack
-• FastAPI
-• SQLAlchemy
-• PostgreSQL
-• JWT Authentication
-• Docker
-• Redis (for tracking cache & real-time status updates)
+---
 
-##Project Structure
+# 👥 Actors
+
+* **Customer**
+* **Delivery Agent**
+* **Admin**
+
+---
+
+# 🛠 Technology Stack
+
+* FastAPI
+* SQLAlchemy
+* PostgreSQL
+* JWT Authentication
+* Docker
+* Redis (Tracking cache & real-time shipment status)
+
+---
+
+# 📂 Project Structure
+
+```bash
 logistics-api/
 │
 ├── app/
-│ ├── main.py
+│   ├── main.py
 │
-│ ├── core/ # Core infrastructure
-│ │ ├── config.py # Environment settings
-│ │ ├── database.py # Engine, SessionLocal, Base
-│ │ ├── security.py # JWT, password hashing
-│ │ ├── dependencies.py # get_db, get_current_user, role checks
+│   ├── core/                     # Core infrastructure
+│   │   ├── config.py             # Environment settings
+│   │   ├── database.py           # Engine, SessionLocal, Base
+│   │   ├── security.py           # JWT & password hashing
+│   │   ├── dependencies.py       # get_db, get_current_user, role checks
 │
-│ ├── models/ # SQLAlchemy ORM models
-│ │ ├── base.py
-│ │ ├── user.py # Admin, Dispatcher, Driver, Customer
-│ │ ├── shipment.py
-│ │ ├── tracking.py
-│ │ ├── hub.py
+│   ├── models/                   # SQLAlchemy ORM models
+│   │   ├── base.py
+│   │   ├── user.py               # Admin, Dispatcher, Driver, Customer
+│   │   ├── shipment.py
+│   │   ├── tracking.py
+│   │   ├── hub.py
 │
-│ ├── schemas/ # Pydantic request/response models
-│ │ ├── auth_schema.py
-│ │ ├── user_schema.py
-│ │ ├── shipment_schema.py
-│ │ ├── tracking_schema.py
-│ │ ├── hub_schema.py
+│   ├── schemas/                  # Pydantic schemas
+│   │   ├── auth_schema.py
+│   │   ├── user_schema.py
+│   │   ├── shipment_schema.py
+│   │   ├── tracking_schema.py
+│   │   ├── hub_schema.py
 │
-│ ├── repositories/ # Data access layer (DB only)
-│ │ ├── user_repository.py
-│ │ ├── shipment_repository.py
-│ │ ├── tracking_repository.py
-│ │ ├── hub_repository.py
+│   ├── repositories/             # Data access layer
+│   │   ├── user_repository.py
+│   │   ├── shipment_repository.py
+│   │   ├── tracking_repository.py
+│   │   ├── hub_repository.py
 │
-│ ├── services/ # Business logic layer
-│ │ ├── auth_service.py
-│ │ ├── user_service.py
-│ │ ├── shipment_service.py
-│ │ ├── tracking_service.py
-│ │ ├── hub_service.py
+│   ├── services/                 # Business logic layer
+│   │   ├── auth_service.py
+│   │   ├── user_service.py
+│   │   ├── shipment_service.py
+│   │   ├── tracking_service.py
+│   │   ├── hub_service.py
 │
-│ ├── api/ # API layer (Controllers)
-│ │ ├── router.py # Central router inclusion
-│ │ ├── routes/
-│ │ │ ├── auth.py
-│ │ │ ├── shipments.py
-│ │ │ ├── tracking.py
-│ │ │ ├── hubs.py
-│ │ │ ├── admin.py
+│   ├── api/                      # API layer (Controllers)
+│   │   ├── router.py             # Central router
+│   │   ├── routes/
+│   │   │   ├── auth.py
+│   │   │   ├── shipments.py
+│   │   │   ├── tracking.py
+│   │   │   ├── hubs.py
+│   │   │   ├── admin.py
 │
-│ ├── middleware/ # Middleware components
-│ │ ├── cors.py
-│ │ ├── logging_middleware.py
-│ │ ├── rate_limiter.py # Optional (API protection)
+│   ├── middleware/
+│   │   ├── cors.py
+│   │   ├── logging_middleware.py
+│   │   ├── rate_limiter.py
 │
-│ ├── exceptions/ # Centralized error handling
-│ │ ├── custom_exceptions.py
-│ │ ├── exception_handlers.py
+│   ├── exceptions/
+│   │   ├── custom_exceptions.py
+│   │   ├── exception_handlers.py
 │
-│ ├── utils/ # Utility helpers
-│ │ ├── constants.py
-│ │ ├── validators.py
+│   ├── utils/
+│   │   ├── constants.py
+│   │   ├── validators.py
 │
-├── alembic/ # DB migrations
+├── alembic/
 ├── alembic.ini
 │
-├── tests/ # Unit & integration tests
-│ ├── test_auth.py
-│ ├── test_shipments.py
-│ ├── test_tracking.py
-│ ├── test_hubs.py
-│ ├── test_admin.py
+├── tests/
+│   ├── test_auth.py
+│   ├── test_shipments.py
+│   ├── test_tracking.py
+│   ├── test_hubs.py
+│   ├── test_admin.py
 │
 ├── Dockerfile
 ├── docker-compose.yml
 ├── requirements.txt
 ├── .env
 └── README.md
+```
 
-##Service Responsibilities (Event-Driven)
--> Auth Service
-Responsibilities
-• Register
-• Login
-• JWT creation
-• Publish user events
+---
 
--> Shipment Service
-Responsibilities
-• Create shipment
-• Update shipment
-• Assign agent
-• Change shipment status
+# 🧠 Service Responsibilities (Event-Driven Architecture)
 
--> Hub Service
-Responsibilities
-• Manage hubs
-• Assign shipments to hubs
+## 🔐 Auth Service
 
--> Tracking Service
-Responsibilities
-• Store tracking history
-• Maintain Redis cache for latest shipment status
+**Responsibilities:**
 
--> Reporting Service
-Responsibilities
-• Analytics
-• Performance metrics
-• Daily reports
-• Hub metrics
+* User registration
+* User login
+* JWT token generation
+* Publish user-related events
 
+---
+
+## 📦 Shipment Service
+
+**Responsibilities:**
+
+* Create shipment
+* Update shipment details
+* Assign delivery agent
+* Change shipment status
+
+---
+
+## 🏢 Hub Service
+
+**Responsibilities:**
+
+* Create & manage hubs
+* Assign shipments to hubs
+
+---
+
+## 📍 Tracking Service
+
+**Responsibilities:**
+
+* Store shipment tracking history
+* Maintain Redis cache for latest shipment status
+* Provide real-time tracking updates
+
+---
+
+## 📊 Reporting Service
+
+**Responsibilities:**
+
+* Analytics dashboard
+* Performance metrics
+* Daily operational reports
+* Hub-level metrics
+
+---
+
+# ⚡ Architecture Pattern
+
+* Layered Architecture
+
+  * API Layer
+  * Service Layer
+  * Repository Layer
+  * Database Layer
+
+* Event-Driven Design
+
+* Role-Based Access Control (RBAC)
+
+* Redis Caching for real-time tracking
+
+---
