@@ -1,29 +1,23 @@
-from datetime import datetime
 from pydantic import BaseModel
+from uuid import UUID
 
 
-# Base shared fields
-class ShipmentBase(BaseModel):
+class ShipmentCreate(BaseModel):
     source_address: str
     destination_address: str
 
 
-# Request model (what client sends)
-class ShipmentCreate(ShipmentBase):
-    pass
-
-
-# Response model (what API returns)
-class ShipmentResponse(ShipmentBase):
+class ShipmentResponse(BaseModel):
     id: int
     tracking_number: str
-    status: str
     source_address: str
     destination_address: str
-    created_at: datetime
+    status: str
 
     class Config:
         from_attributes = True
-    
+
+
 class ShipmentStatusUpdate(BaseModel):
     status: str
+    location: str | None = None

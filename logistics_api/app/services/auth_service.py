@@ -1,45 +1,41 @@
 from sqlalchemy.orm import Session
 from fastapi import HTTPException
-from app.models.user import User, UserRole
+from datetime import timedelta
+
+from app.models.user import User
+from app.repositories.user_repository import UserRepository
 from app.core.security import hash_password, verify_password, create_access_token
 
 
 class AuthService:
 
     def register(self, db: Session, data):
-        # check if user already exists
-        existing_user = db.query(User).filter(User.email == data.email).first()
-        if existing_user:
+        repo = UserRepository()
+
+        existing = repo.get_by_email(db, data.email)
+        if existing:
             raise HTTPException(status_code=400, detail="Email already registered")
 
         user = User(
             email=data.email,
-            hashed_password=hash_password(data.password),
+            password_hash=hash_password(data.password),
             role=data.role
         )
 
-        db.add(user)
-        db.commit()
-        db.refresh(user)
+        return repo.create(db, user)
 
-        return {
-            "message": "User registered successfully"
-        }
+    def login(self, db: Session, email: str, password: str):
+        repo = UserRepository()
+        user = repo.get_by_email(db, email)
 
-    def login(self, db, email: str, password: str):
-        user = db.query(User).filter(User.email == email).first()
-
-        if not user:
+        if not user or not verify_password(password, user.password_hash):
             raise HTTPException(status_code=401, detail="Invalid credentials")
 
-        if not verify_password(password, user.hashed_password):
-            raise HTTPException(status_code=401, detail="Invalid credentials")
-
-        access_token = create_access_token(
-             data={"sub": str(user.id), "role": user.role}
+        token = create_access_token(
+            data={"sub": str(user.id), "role": user.role.value}
         )
 
         return {
-            "access_token": access_token,
+            "access_token": token,
             "token_type": "bearer"
         }

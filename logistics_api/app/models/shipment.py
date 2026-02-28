@@ -1,17 +1,18 @@
-from sqlalchemy import Column, Integer, String, ForeignKey, DateTime
-from sqlalchemy.sql import func
-from app.core.database import Base
+from sqlalchemy import Column, String, ForeignKey, Text, Integer
 from sqlalchemy.orm import relationship
+from app.models.base import BaseModel
 
-class Shipment(Base):
+
+class Shipment(BaseModel):
     __tablename__ = "shipments"
 
-    id = Column(Integer, primary_key=True, index=True)
-    tracking_number = Column(String, unique=True, index=True)
-    source_address = Column(String, nullable=False)
-    destination_address = Column(String, nullable=False)
+    tracking_number = Column(String, unique=True, nullable=False)
+    source_address = Column(Text, nullable=False)
+    destination_address = Column(Text, nullable=False)
     status = Column(String, default="created")
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     customer_id = Column(Integer, ForeignKey("users.id"))
+    agent_id = Column(Integer, ForeignKey("users.id"), nullable=True)
     hub_id = Column(Integer, ForeignKey("hubs.id"), nullable=True)
+
+    customer = relationship("User", foreign_keys=[customer_id])

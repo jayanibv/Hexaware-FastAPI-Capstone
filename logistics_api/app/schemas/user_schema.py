@@ -1,14 +1,12 @@
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel
+from uuid import UUID
+from app.models.user import UserRole
 
-class UserBase(BaseModel):
-    email: EmailStr = Field(..., description="User email address")
-    role: str
 
-class UserCreate(UserBase):
-    password: str = Field(..., min_length=6, max_length=50)
-
-class User(UserBase):
+class UserResponse(BaseModel):
     id: int
-    
+    email: str
+    role: UserRole
+
     class Config:
         from_attributes = True

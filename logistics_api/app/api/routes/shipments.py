@@ -1,58 +1,47 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
-from fastapi import HTTPException
-from app.core.database import SessionLocal
+
+from app.core.dependencies import get_db, get_current_user, require_role
 from app.services.shipment_service import ShipmentService
-from app.core.dependencies import get_current_user
-from app.schemas.shipment_schema import ShipmentCreate
-from app.schemas.shipment_schema import ShipmentResponse
-from app.models.shipment import Shipment
-from app.schemas.shipment_schema import ShipmentStatusUpdate
-from app.core.dependencies import require_role
+from app.schemas.shipment_schema import ShipmentCreate, ShipmentStatusUpdate, ShipmentResponse
 
 router = APIRouter(prefix="/shipments", tags=["Shipments"])
 
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
-
-@router.get("/{shipment_id}")
-def get_shipment(
-    shipment_id: int,
-    db: Session = Depends(get_db)
-):
-    shipment = ShipmentService().get_shipment_by_id(db, shipment_id)
-    if not shipment:
-        raise HTTPException(status_code=404, detail="Shipment not found")
-    return shipment
 
 @router.post("", response_model=ShipmentResponse)
 def create_shipment(
     data: ShipmentCreate,
     db: Session = Depends(get_db),
-    user=Depends(get_current_user)
+    user=Depends(require_role(["customer"]))
 ):
     return ShipmentService().create_shipment(db, user, data)
 
-@router.put("/{tracking_number}/status")
+
+@router.get("/{tracking_number}", response_model=ShipmentResponse)
+def get_shipment(
+    tracking_number: str,
+    db: Session = Depends(get_db),
+    user=Depends(require_role(["customer", "agent"]))
+):
+    return ShipmentService().get_shipment(db, tracking_number, user)
+
+
+@router.put("/{tracking_number}/status", response_model=ShipmentResponse)
 def update_status(
     tracking_number: str,
     data: ShipmentStatusUpdate,
     db: Session = Depends(get_db),
-    user=Depends(require_role("AGENT"))
+    user=Depends(require_role(["agent"]))
 ):
     return ShipmentService().update_status(
-        db, tracking_number, data.status, user.id
+        db, tracking_number, data.status, user
     )
 
-@router.put("/{tracking_number}/assign/{hub_id}")
-def assign_hub(
+
+@router.put("/{tracking_number}/cancel", response_model=ShipmentResponse)
+def cancel_shipment(
     tracking_number: str,
-    hub_id: int,
     db: Session = Depends(get_db),
-    user=Depends(require_role("AGENT"))
+    user=Depends(require_role(["customer"]))
 ):
-    return ShipmentService().assign_hub(db, tracking_number, hub_id)
+    return ShipmentService().cancel_shipment(db, tracking_number, user)

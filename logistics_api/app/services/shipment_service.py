@@ -1,19 +1,19 @@
 import random
-from app.models.shipment import Shipment
-from app.models.tracking import Tracking
+from sqlalchemy.orm import Session
 from fastapi import HTTPException
 
+from app.models.shipment import Shipment
+from app.models.tracking import Tracking
+from app.repositories.shipment_repository import ShipmentRepository
+from app.repositories.tracking_repository import TrackingRepository
 
-VALID_TRANSITIONS = {
-    "created": ["in_transit"],
-    "in_transit": ["out_for_delivery"],
-    "out_for_delivery": ["delivered"],
-    "delivered": []
-}
 
 class ShipmentService:
 
-    def create_shipment(self, db, user, data):
+    def create_shipment(self, db: Session, user, data):
+        repo = ShipmentRepository()
+        tracking_repo = TrackingRepository()
+
         tracking_number = f"TRK{random.randint(100000, 999999)}"
 
         shipment = Shipment(
@@ -21,63 +21,70 @@ class ShipmentService:
             customer_id=user.id,
             source_address=data.source_address,
             destination_address=data.destination_address,
-            status="created"
+            status="CREATED"
         )
 
-        db.add(shipment)
-        db.commit()
-        db.refresh(shipment)
+        shipment = repo.create(db, shipment)
 
         tracking = Tracking(
             shipment_id=shipment.id,
             location=data.source_address,
-            status="created"
+            status="CREATED"
         )
 
-        db.add(tracking)
-        db.commit()
+        tracking_repo.create(db, tracking)
 
         return shipment
 
-    def get_shipment_by_id(self, db, shipment_id):
-        return db.query(Shipment).filter(
-            Shipment.id == shipment_id
-        ).first()
+    def update_status(self, db: Session, tracking_number: str, status: str, user):
+        repo = ShipmentRepository()
+        tracking_repo = TrackingRepository()
 
-    def update_status(self, db, tracking_number, new_status, staff_id):
-        shipment = db.query(Shipment).filter(
-            Shipment.tracking_number == tracking_number
-        ).first()
+        shipment = repo.get_by_tracking(db, tracking_number)
 
         if not shipment:
-            raise HTTPException(404, "Shipment not found")
+            raise HTTPException(status_code=404, detail="Shipment not found")
 
-        if new_status not in VALID_TRANSITIONS[shipment.status]:
-            raise HTTPException(400, "Invalid status transition")
-
-        shipment.status = new_status
+        shipment.status = status
         db.commit()
 
         tracking = Tracking(
             shipment_id=shipment.id,
-            location="Updated by staff",
-            status=new_status
+            location="Updated",
+            status=status
         )
-        db.add(tracking)
-        db.commit()
+
+        tracking_repo.create(db, tracking)
+
         return shipment
 
+    def cancel_shipment(self, db: Session, tracking_number: str, user):
+        repo = ShipmentRepository()
 
-    def assign_hub(self, db, tracking_number, hub_id):
-        shipment = db.query(Shipment).filter(
-            Shipment.tracking_number == tracking_number
-        ).first()
+        shipment = repo.get_by_tracking(db, tracking_number)
 
         if not shipment:
-            raise HTTPException(404, "Shipment not found")
+            raise HTTPException(status_code=404, detail="Shipment not found")
 
-        shipment.hub_id = hub_id
+        if shipment.status == "DELIVERED":
+            raise HTTPException(status_code=400, detail="Cannot cancel delivered shipment")
+
+        shipment.status = "CANCELLED"
         db.commit()
-        db.refresh(shipment)
+
+        return shipment
+
+    def get_shipment(self, db: Session, tracking_number: str, user=None):
+        repo = ShipmentRepository()
+        shipment = repo.get_by_tracking(db, tracking_number)
+
+        if not shipment:
+            raise HTTPException(status_code=404, detail="Shipment not found")
+
+        if user and user.role.value == "customer" and shipment.customer_id != user.id:
+            raise HTTPException(
+                status_code=403,
+                detail="You do not have permission to view this shipment"
+            )
 
         return shipment

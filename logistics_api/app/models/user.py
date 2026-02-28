@@ -1,17 +1,17 @@
-from  sqlalchemy import Column, Integer, String, Enum
-from  sqlalchemy.sql import func
-from  app.core.database import Base
 import enum
+from sqlalchemy import Column, String, Enum
+from app.models.base import BaseModel
+
 
 class UserRole(str, enum.Enum):
     customer = "customer"
     agent = "agent"
     admin = "admin"
 
-class User(Base):
+
+class User(BaseModel):
     __tablename__ = "users"
-    
-    id = Column(Integer, primary_key=True, index=True)
-    email = Column(String, unique=True)
-    hashed_password = Column(String)
+
+    email = Column(String, unique=True, nullable=False)
+    password_hash = Column(String, nullable=False)
     role = Column(Enum(UserRole), nullable=False)

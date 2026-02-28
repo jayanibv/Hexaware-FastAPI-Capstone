@@ -1,14 +1,16 @@
 from pydantic import BaseModel
-from datetime import datetime
+from uuid import UUID
+
 
 class HubCreate(BaseModel):
-    name: str
-    location: str
+    hub_name: str
+    city: str
+
 
 class HubResponse(BaseModel):
     id: int
-    name: str
-    location: str
-    created_at: datetime
+    hub_name: str
+    city: str
 
-    model_config = {"from_attributes": True}
+    class Config:
+        from_attributes = True

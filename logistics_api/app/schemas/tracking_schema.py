@@ -1,15 +1,17 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
+from uuid import UUID
 
-class TrackingBase(BaseModel):
-    location: str 
+
+class TrackingCreate(BaseModel):
+    location: str
     status: str
-    updated_at: datetime
 
-class TrackingCreate(TrackingBase):
-    pass
 
-class Tracking(TrackingBase):
+class TrackingResponse(BaseModel):
     id: int
-    
+    shipment_id: int
+    location: str
+    status: str
+
     class Config:
         from_attributes = True

@@ -1,15 +1,20 @@
 from fastapi import FastAPI
 from app.core.database import engine
 from app.core.database import Base
+from app.api.router import api_router
+from app.middleware.cors import setup_cors
+from app.middleware.logging_middleware import LoggingMiddleware
+from app.exceptions.exception_handlers import register_exception_handlers
 
-from app.models import user, shipment, tracking, hub
-
-from app.api.routes import auth, shipments, hub
-
-app = FastAPI(title="Logistics API - Sprint 1")
+app = FastAPI(title="Logistics API")
 
 Base.metadata.create_all(bind=engine)
+# Routers
+app.include_router(api_router)
 
-app.include_router(auth.router)
-app.include_router(shipments.router)
-app.include_router(hub.router)
+# Middleware
+setup_cors(app)
+app.add_middleware(LoggingMiddleware)
+
+# Exception Handlers
+register_exception_handlers(app)

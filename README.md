@@ -173,3 +173,40 @@ logistics-api/
 * Role-Based Access Control (RBAC)
 
 * Redis Caching for real-time tracking
+
+## ADMIN
+
+* Register
+* Login
+* User Management
+* View all users
+* Create hub
+* View all hubs
+* View shipment details
+* Update shipment status
+
+## AGENT (Staff)
+* Register
+* Login
+* View shipment details
+* Update shipment status
+* Add tracking updates
+
+**Agent does NOT:**
+* Create shipment
+* Cancel shipment
+* Create hub
+* View all users
+
+## CUSTOMER
+* Register
+* Login
+* Create shipment
+* View shipment details
+* Track shipment history
+* Cancel shipment (if not delivered)
+
+**Customer does NOT:**
+* Update shipment status
+* Create hub
+* View all users
