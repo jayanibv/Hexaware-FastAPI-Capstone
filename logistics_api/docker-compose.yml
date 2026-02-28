@@ -1,0 +1,86 @@
+version: "3.9"
+
+services:
+
+  db:
+    image: postgres:15
+    container_name: logistics_db
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: root
+      POSTGRES_DB: logistics
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  auth_service:
+    build: ./microservices/auth_service
+    container_name: auth_service
+    env_file:
+      - ./microservices/auth_service/.env
+    depends_on:
+      db:
+        condition: service_healthy
+    expose:
+      - "8000"
+    restart: always
+
+  shipment_service:
+    build: ./microservices/shipment_service
+    container_name: shipment_service
+    env_file:
+      - ./microservices/shipment_service/.env
+    depends_on:
+      db:
+        condition: service_healthy
+    expose:
+      - "8000"
+    restart: always
+
+  tracking_service:
+    build: ./microservices/tracking_service
+    container_name: tracking_service
+    env_file:
+      - ./microservices/tracking_service/.env
+    depends_on:
+      db:
+        condition: service_healthy
+    expose:
+      - "8000"
+    restart: always
+
+  hub_service:
+    build: ./microservices/hub_service
+    container_name: hub_service
+    env_file:
+      - ./microservices/hub_service/.env
+    depends_on:
+      db:
+        condition: service_healthy
+    expose:
+      - "8000"
+    restart: always
+
+  nginx:
+    image: nginx:latest
+    container_name: api_gateway
+    ports:
+      - "8000:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf
+    depends_on:
+      - auth_service
+      - shipment_service
+      - tracking_service
+      - hub_service
+    restart: always
+
+volumes:
+  postgres_data:
