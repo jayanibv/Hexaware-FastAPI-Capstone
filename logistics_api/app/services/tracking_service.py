@@ -27,6 +27,7 @@ class TrackingService:
             location=location,
             status=status
         )
+        return tracking_repo.create(db, tracking)
 
     def add_tracking_update(self, db: Session, tracking_number: str, data, user):
         shipment_repo = ShipmentRepository()
